@@ -1,7 +1,6 @@
 import os
 import time
 import playsound
-import pyttsx3
 import speech_recognition as sr
 from gtts import gTTS
 
@@ -28,8 +27,4 @@ def bot_ear():
             print("Exception" + str(e))
 
         return word
-    
-text = bot_ear()
 
-if "hello" in text:
-    bot_speak("Hello Quin, how are you ?")
