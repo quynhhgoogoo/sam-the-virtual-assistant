@@ -1,17 +1,16 @@
 import os
 import time
-import playsound
+#import playsound
 import speech_recognition as sr
-from gtts import gTTS
+#from gtts import gTTS
+import pyttsx3
+#from google_calendar import *
 
 '''Enables voice for the bot'''
 def bot_speak(text):
-    #Transforms text to audio
-    both_mouth = gTTS(text=text, lang="en")
-    filename = "voice.mp3"
-    both_mouth.save(filename)
-    playsound.playsound(filename)
-    os.remove("voice.mp3")
+    mouth = pyttsx3.init()
+    mouth.say(text)
+    mouth.runAndWait()
 
 '''Get/Listens to user's voice'''
 def bot_ear():
@@ -29,3 +28,4 @@ def bot_ear():
 
         return word
 
+bot_speak('hello')

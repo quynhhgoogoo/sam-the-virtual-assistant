@@ -17,6 +17,7 @@ from __future__ import print_function
 import datetime
 import pickle
 import os.path
+import pytz
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -24,7 +25,7 @@ from bot import *
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-DAY_EXTENSIONS = ['st', 'nd', 'rd']
+DAY_EXTENSIONS = ['st', 'nd', 'rd', 'th']
 DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',]
 MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december']
 
@@ -52,20 +53,40 @@ def authenticate_google():
 
     return service
 
-def get_calendar_events(e, service):
+def get_calendar_events(day, service):
+
+    #Initialize time boundary (start and end time during day) for searching
+    date = datetime.datetime.combine(day, datetime.datetime.min.time())
+    end_date = datetime.datetime.combine(day, datetime.datetime.max.time())
+
+    utc = pytz.UTC      #Get current UTC timezone
+    date = date.astimezone(utc)
+    end_date = end_date.astimezone(utc)
+    
     # Call the Calendar API
     now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
-    print('Getting the upcoming {e} events')
-    events_result = service.events().list(calendarId='primary', timeMin=now,
-                                        maxResults=e, singleEvents=True,
-                                        orderBy='startTime').execute()
+    print('Getting the upcoming events')
+    events_result = service.events().list(calendarId='primary', timeMin=date.isoformat(), timeMax=end_date.isoformat(),
+                                          singleEvents=True, orderBy='startTime').execute()
     events = events_result.get('items', [])
 
     if not events:
-        print('No upcoming events found.')
-    for event in events:
-        start = event['start'].get('dateTime', event['start'].get('date'))
-        print(start, event['summary'])
+        bot_speak('No upcoming events found.')
+    else:
+        bot_speak(f"Hello Beauty. You have {len(events)} events on this day.")
+        for event in events:
+            start = event['start'].get('dateTime', event['start'].get('date'))
+            print(start, event['summary'])
+
+            start_time = str(start.split("T")[1].split("-")[0])
+            if int(start_time.split(":")[0]) < 12:
+                start_time = str(int(start_time.split(":")[0]))
+                start_time = start_time + "am"
+            else:
+                start_time = str(int(start_time.split(":")[0])-12)
+                start_time = start_time + "pm"
+
+            bot_speak(event["summary"] + " at " + start_time)
 
 def get_date(text):
     text = text.lower()
@@ -116,10 +137,14 @@ def get_date(text):
                 dif += 7
 
         return today + datetime.timedelta(dif)
+
+    if month == -1 or day == -1:
+        return None
     return datetime.date(month=month, day=day, year=year)
 
 #service = authenticate_google()
 #get_calendar_events(10, service)
 
+SERVICE = authenticate_google()
 text = bot_ear().lower()
-print(get_date(text))
+get_calendar_events(get_date(text), SERVICE)
