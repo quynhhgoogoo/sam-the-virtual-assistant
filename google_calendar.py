@@ -25,6 +25,7 @@ from bot import *
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+CALENDAR_CMDS =["what do i have", "what is my plan", "do i have plan", "am i busy", "do i have any plan"]
 DAY_EXTENSIONS = ['st', 'nd', 'rd', 'th']
 DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',]
 MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december']
@@ -71,7 +72,8 @@ def get_calendar_events(day, service):
     events = events_result.get('items', [])
 
     if not events:
-        bot_speak('No upcoming events found.')
+        print("freee")
+        bot_speak("You do not have any events today. But dont worry, you always have me by your side.")
     else:
         bot_speak(f"Hello Beauty. You have {len(events)} events on this day.")
         for event in events:
@@ -146,5 +148,14 @@ def get_date(text):
 #get_calendar_events(10, service)
 
 SERVICE = authenticate_google()
+print("Sammy is ready now. Please ask something")
 text = bot_ear().lower()
-get_calendar_events(get_date(text), SERVICE)
+
+for phrase in CALENDAR_CMDS:
+    if phrase in text.lower():
+        date = get_date(text)
+        if date:
+            get_calendar_events(get_date(text), SERVICE)
+        else:
+            bot_speak("Eventhough I do not get you but I think that you look really cute today")
+            
