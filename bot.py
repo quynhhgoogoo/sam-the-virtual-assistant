@@ -27,5 +27,5 @@ def bot_ear():
         except Exception as e:
             print("Exception" + str(e))
 
-        return word
+    return word.lower()
 

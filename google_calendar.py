@@ -18,6 +18,7 @@ import datetime
 import pickle
 import os.path
 import pytz
+import subprocess
 
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -26,7 +27,6 @@ from bot import *
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-CALENDAR_CMDS =["what do i have", "what is my plan", "do i have plan", "am i busy", "do i have any plan"]
 DAY_EXTENSIONS = ['st', 'nd', 'rd', 'th']
 DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',]
 MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december']
@@ -83,11 +83,20 @@ def get_calendar_events(day, service):
 
             start_time = str(start.split("T")[1].split("-")[0])
             if int(start_time.split(":")[0]) < 12:
-                start_time = str(int(start_time.split(":")[0]))
-                start_time = start_time + "am"
+                #Avoid bugs
+                if start_time.split(":")[1] == "00":
+                    start_time = str(int(start_time.split(":")[0]))
+                    start_time = start_time + "am"
+                else:
+                    start_time = str(int(start_time.split(":")[0])) + start_time.split(":")[1]
+                    start_time = start_time + "am"
             else:
-                start_time = str(int(start_time.split(":")[0])-12)
-                start_time = start_time + "pm"
+                if start_time.split(":")[1] == "00":
+                    start_time = str(int(start_time.split(":")[0])-12)
+                    start_time = start_time + "pm"
+                else:
+                    start_time = str(int(start_time.split(":")[0])-12) + start_time.split(":")[1]
+                    start_time = start_time + "pm"
 
             bot_speak(event["summary"] + " at " + start_time)
 
@@ -145,18 +154,15 @@ def get_date(text):
         return None
     return datetime.date(month=month, day=day, year=year)
 
-#service = authenticate_google()
-#get_calendar_events(10, service)
+def take_note(text):
+    date = datetime.datetime.now()
+    file_name = str(date).replace(":","-") + "-note.txt"
 
-SERVICE = authenticate_google()
-print("Sammy is ready now. Please ask something")
-text = bot_ear().lower()
+    with open(file_name, "w") as f:
+        f.write(text)
 
-for phrase in CALENDAR_CMDS:
-    if phrase in text.lower():
-        date = get_date(text)
-        if date:
-            get_calendar_events(get_date(text), SERVICE)
-        else:
-            bot_speak("Eventhough I do not get you but I think that you look really cute today")
+    notepad = "C:\\Users\\quynhhgoogoo\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Accessories\\notepad.exe"
+    subprocess.Popen([notepad, file_name])
+
+
             
